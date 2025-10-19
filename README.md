@@ -99,6 +99,8 @@ docker run -p 9000:9000 -p 9080:9080 \
 - `SRC_ACCESS_TOKEN`: Authentication token for private Sourcegraph instances
 - `MCP_SSE_PORT`: SSE server port (default: 8000)
 - `MCP_STREAMABLE_HTTP_PORT`: HTTP server port (default: 8080)
+- `FASTMCP_SSE_PATH`: SSE endpoint path (default: /sourcegraph/sse)
+- `FASTMCP_MESSAGE_PATH`: SSE messages endpoint path (default: /sourcegraph/messages/)
 
 ## Usage with AI Tools
 

@@ -36,7 +36,7 @@ class ServerConfig:
 
 config = ServerConfig()
 
-server = FastMCP(sse_path="/sourcegraph/sse", message_path="/sourcegraph/messages/")
+server = FastMCP()
 
 search_client = SourcegraphClient(endpoint=config.sourcegraph_endpoint, token=config.sourcegraph_token)
 content_fetcher = SourcegraphContentFetcher(endpoint=config.sourcegraph_endpoint, token=config.sourcegraph_token)
@@ -65,6 +65,7 @@ def signal_handler(sig: int, frame: Any) -> None:
     _shutdown_requested = True
 
 
+@server.tool(description=FETCH_CONTENT_DESCRIPTION)
 def fetch_content(repo: str, path: str) -> str:
     if _shutdown_requested:
         logger.info("Shutdown in progress, declining new requests")
@@ -81,6 +82,7 @@ def fetch_content(repo: str, path: str) -> str:
         return "error fetching content"
 
 
+@server.tool(description=SEARCH_TOOL_DESCRIPTION)
 def search(query: str) -> List[FormattedResult]:
     if _shutdown_requested:
         logger.info("Shutdown in progress, declining new requests")
@@ -100,6 +102,7 @@ def search(query: str) -> List[FormattedResult]:
         return []
 
 
+@server.tool(description=SEARCH_PROMPT_GUIDE_DESCRIPTION)
 def search_prompt_guide(objective: str) -> str:
     if _shutdown_requested:
         logger.info("Shutdown in progress, declining new prompt guide requests")
@@ -119,26 +122,6 @@ def search_prompt_guide(objective: str) -> str:
     return "".join(prompt_parts)
 
 
-def _register_tools() -> None:
-    """Register MCP tools with the server."""
-    tool_descriptions = {
-        "search": SEARCH_TOOL_DESCRIPTION,
-        "search_prompt_guide": SEARCH_PROMPT_GUIDE_DESCRIPTION,
-        "fetch_content": FETCH_CONTENT_DESCRIPTION,
-    }
-
-    tools = [
-        (search, "search"),
-        (search_prompt_guide, "search_prompt_guide"),
-        (fetch_content, "fetch_content"),
-    ]
-
-    for tool_func, tool_name in tools:
-        description = tool_descriptions.get(tool_name, "")
-        server.add_tool(tool_func, tool_name, description)
-        logger.info(f"Registered tool: {tool_name}")
-
-
 async def _run_server() -> None:
     """Run the FastMCP server with both HTTP and SSE transports."""
     tasks = [
@@ -156,8 +139,6 @@ async def _run_server() -> None:
 def main() -> None:
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
-
-    _register_tools()
 
     try:
         logger.info("Starting Sourcegraph MCP server...")

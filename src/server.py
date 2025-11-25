@@ -2,13 +2,11 @@ import asyncio
 import logging
 import pathlib
 import signal
-import uuid
 from typing import Any, List
 
 import requests
 from dotenv import load_dotenv
 from fastmcp import FastMCP
-from fastmcp.server.dependencies import get_http_request
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
@@ -35,19 +33,15 @@ class SourcegraphMCPServer:
 
     def _setup_clients(self) -> None:
         self.search_client = SourcegraphClient(
-            endpoint=self.config.sourcegraph_endpoint, 
-            token=self.config.sourcegraph_token
+            endpoint=self.config.sourcegraph_endpoint, token=self.config.sourcegraph_token
         )
         self.content_fetcher = SourcegraphContentFetcher(
-            endpoint=self.config.sourcegraph_endpoint, 
-            token=self.config.sourcegraph_token
+            endpoint=self.config.sourcegraph_endpoint, token=self.config.sourcegraph_token
         )
         logger.info("Using Sourcegraph backend")
 
     def _load_prompts(self) -> None:
-        prompt_manager = PromptManager(
-            file_path=pathlib.Path(__file__).parent / "prompts" / "prompts.yaml"
-        )
+        prompt_manager = PromptManager(file_path=pathlib.Path(__file__).parent / "prompts" / "prompts.yaml")
 
         self.codesearch_guide = prompt_manager._load_prompt("guides.codesearch_guide")
         self.search_tool_description = prompt_manager._load_prompt("tools.search")
@@ -185,9 +179,7 @@ class SourcegraphMCPServer:
                         {"status": "not_ready", "reason": "content_fetcher_unavailable"}, status_code=503
                     )
 
-                return JSONResponse(
-                    {"status": "ready", "service": "sourcegraph-mcp", "backend": "sourcegraph"}
-                )
+                return JSONResponse({"status": "ready", "service": "sourcegraph-mcp", "backend": "sourcegraph"})
             except Exception as e:
                 logger.error(f"Readiness check failed: {e}")
                 return JSONResponse({"status": "error", "reason": str(e)}, status_code=503)
